@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#65bd50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="H20 Studio">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="logo.png">
+    <title>H20 STUDIO - Kasir</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- SheetJS library for Excel export/import -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --header-green: #65bd50;
+            --header-orange: #ea9c4a;
+            --border-color: #333;
+            --bg-color: #1a1a2e;
+            --card-bg: #16213e;
+            --text-color: #eee;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .app-header {
+            background: linear-gradient(135deg, #65bd50, #4a9c3a);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .app-header h1 {
+            margin: 0;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .app-header .subtitle {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            margin-top: 2px;
+        }
+
+        /* Auth Section */
+        .auth-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .user-info {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+
+        .btn-auth {
+            padding: 6px 16px;
+            border: none;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-login {
+            background: white;
+            color: #333;
+        }
+
+        .btn-login:hover {
+            background: #f0f0f0;
+        }
+
+        .btn-logout {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .btn-logout:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Login Overlay */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .login-overlay.hidden {
+            display: none;
+        }
+
+        .login-box {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .login-box h2 {
+            margin: 0 0 10px 0;
+            color: var(--header-green);
+        }
+
+        .login-box p {
+            margin: 0 0 25px 0;
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        .login-box .btn-google {
+            background: white;
+            color: #333;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 auto;
+            transition: all 0.2s;
+        }
+
+        .login-box .btn-google:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+        }
+
+        .login-box .btn-google img {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Sync Status */
+        .sync-status {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        .sync-status.syncing {
+            color: #ea9c4a;
+        }
+
+        .sync-status.synced {
+            color: #65bd50;
+        }
+
+        .container {
+            padding: 10px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Summary Cards */
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .summary-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .summary-card.profit {
+            background: linear-gradient(135deg, #65bd50, #4a9c3a);
+        }
+
+        .summary-card .label {
+            font-size: 0.75rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+        }
+
+        .summary-card .value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        /* Data List */
+        .data-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .data-header {
+            background: var(--header-orange);
+            color: #1a1a1a;
+            padding: 12px 15px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .data-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .data-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .data-item:last-child {
+            border-bottom: none;
+        }
+
+        .data-item .info {
+            flex: 1;
+        }
+
+        .data-item .info .name {
+            font-weight: 500;
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+
+        .data-item .info .details {
+            font-size: 0.75rem;
+            opacity: 0.7;
+        }
+
+        .data-item .numbers {
+            text-align: right;
+        }
+
+        .data-item .numbers .jual {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #65bd50;
+        }
+
+        .data-item .numbers .untung {
+            font-size: 0.75rem;
+            color: #ea9c4a;
+        }
+
+        .btn-delete-item {
+            background: #ff4d4d;
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            margin-left: 10px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .btn-delete-item:hover {
+            background: #ff1a1a;
+        }
+
+        /* Input Form */
+        .input-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 80px;
+        }
+
+        .input-section h2 {
+            margin: 0 0 15px 0;
+            font-size: 1rem;
+            color: var(--header-orange);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .form-row.full {
+            grid-template-columns: 1fr;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 0.75rem;
+            margin-bottom: 4px;
+            opacity: 0.8;
+        }
+
+        .form-group input {
+            padding: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            width: 100%;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--header-green);
+        }
+
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Bottom Action Bar */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            padding: 10px 15px;
+            display: flex;
+            gap: 10px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-add {
+            background: linear-gradient(135deg, #65bd50, #4a9c3a);
+            color: white;
+        }
+
+        .btn-print {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            opacity: 0.7;
+        }
+
+        .loading .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--header-green);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+
+            .app-header {
+                background: var(--header-green) !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .bottom-bar,
+            .input-section,
+            .btn-delete-item,
+            .summary-cards,
+            .auth-section {
+                display: none !important;
+            }
+
+            .data-section {
+                background: white;
+                box-shadow: none;
+            }
+
+            .data-item {
+                border-bottom: 1px solid #ccc;
+                color: black;
+            }
+
+            .data-item .numbers .jual {
+                color: #333;
+            }
+
+            .data-list {
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Login Overlay -->
+    <div class="login-overlay" id="login-overlay">
+        <div class="login-box">
+            <h2>📊 H20 STUDIO</h2>
+            <p>Silakan login untuk mengakses kasir</p>
+            <button class="btn-google" id="btn-google-login">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                Login dengan Google
+            </button>
+        </div>
+    </div>
+
+    <header class="app-header">
+        <h1>📊 H20 STUDIO</h1>
+        <div class="promo-text"><a href="https://wa.me/6285724875555"
+                style="color: white; text-decoration: none; opacity: 0.9; font-size: 0.75rem;">Minat Web/Aplikasi lain?
+                WA 085724875555</a></div>
+        <div class="subtitle" id="current-date"></div>
+        <div class="auth-section" id="auth-section" style="display: none;">
+            <span class="user-info" id="user-info"></span>
+            <button class="btn-auth btn-logout" id="btn-logout">Logout</button>
+        </div>
+        <div class="sync-status" id="sync-status"></div>
+    </header>
+
+    <div class="container">
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="label">Total Modal</div>
+                <div class="value" id="sum-modal">Rp 0</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Total Penjualan</div>
+                <div class="value" id="sum-jual">Rp 0</div>
+            </div>
+            <div class="summary-card profit">
+                <div class="label">💰 Keuntungan</div>
+                <div class="value" id="sum-untung">Rp 0</div>
+            </div>
+            <div class="summary-card">
+                <div class="label">Tarik Tunai</div>
+                <div class="value" id="sum-tarik">Rp 0</div>
+            </div>
+        </div>
+
+        <!-- Data List -->
+        <div class="data-section">
+            <div class="data-header">
+                <span>📋 Daftar Transaksi</span>
+                <span id="count-items">0 item</span>
+            </div>
+            <div class="data-list" id="data-list">
+                <div class="empty-state">
+                    <div class="icon">📝</div>
+                    <div>Belum ada data</div>
+                    <div>Tambah transaksi pertama!</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Form -->
+        <div class="input-section">
+            <h2>➕ Tambah Transaksi</h2>
+            <form id="add-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Tanggal</label>
+                        <input type="date" id="input-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Keterangan</label>
+                        <input type="text" id="input-keterangan" placeholder="top up, kuota, dll" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Modal (Rp)</label>
+                        <input type="number" id="input-modal" placeholder="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Harga Jual (Rp)</label>
+                        <input type="number" id="input-jual" placeholder="0" required>
+                    </div>
+                </div>
+                <div class="form-row full">
+                    <div class="form-group">
+                        <label>Tarik Tunai (Rp)</label>
+                        <input type="number" id="input-tarik" placeholder="0" value="0">
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bottom Action Bar -->
+    <div class="bottom-bar">
+        <button type="button" class="btn btn-add" onclick="submitForm()">
+            ➕ Tambah
+        </button>
+        <button type="button" class="btn btn-print" onclick="exportData()">
+            💾 Export
+        </button>
+        <button type="button" class="btn btn-print" onclick="document.getElementById('import-file').click()">
+            📥 Import
+        </button>
+        <button type="button" class="btn btn-print" onclick="window.print()">
+            🖨️ Print
+        </button>
+    </div>
+
+    <!-- Hidden file input for import -->
+    <input type="file" id="import-file" accept=".xlsx,.xls" style="display:none" onchange="importData(event)">
+
+    <script type="module">
+        // Import Firebase
+        import { auth, db, googleProvider, signInWithPopup, signOut, onAuthStateChanged, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, serverTimestamp } from './firebase-config.js';
+
+        let salesData = [];
+        let currentUser = null;
+
+        // DOM Elements
+        const loginOverlay = document.getElementById('login-overlay');
+        const authSection = document.getElementById('auth-section');
+        const userInfo = document.getElementById('user-info');
+        const syncStatus = document.getElementById('sync-status');
+
+        // Auth State Observer
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                loginOverlay.classList.add('hidden');
+                authSection.style.display = 'flex';
+                userInfo.textContent = user.displayName || user.email;
+                loadDataFromFirestore();
+            } else {
+                currentUser = null;
+                loginOverlay.classList.remove('hidden');
+                authSection.style.display = 'none';
+                salesData = [];
+                renderData();
+            }
+        });
+
+        // Google Login
+        document.getElementById('btn-google-login').addEventListener('click', async () => {
+            try {
+                await signInWithPopup(auth, googleProvider);
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Gagal login: ' + error.message);
+            }
+        });
+
+        // Logout
+        document.getElementById('btn-logout').addEventListener('click', async () => {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        });
+
+        // Load data from Firestore
+        async function loadDataFromFirestore() {
+            if (!currentUser) return;
+
+            syncStatus.textContent = '⏳ Memuat data...';
+            syncStatus.className = 'sync-status syncing';
+
+            try {
+                const transactionsRef = collection(db, 'users', currentUser.uid, 'transactions');
+                const q = query(transactionsRef, orderBy('createdAt', 'desc'));
+                const snapshot = await getDocs(q);
+
+                salesData = [];
+                snapshot.forEach((docSnap) => {
+                    salesData.push({
+                        id: docSnap.id,
+                        ...docSnap.data()
+                    });
+                });
+
+                // Reverse to show oldest first in list but keep newest first for queries
+                salesData.reverse();
+
+                renderData();
+                syncStatus.textContent = '✓ Data tersinkronisasi';
+                syncStatus.className = 'sync-status synced';
+
+                setTimeout(() => {
+                    syncStatus.textContent = '';
+                }, 3000);
+            } catch (error) {
+                console.error('Error loading data:', error);
+                syncStatus.textContent = '❌ Gagal memuat data';
+                syncStatus.className = 'sync-status';
+            }
+        }
+
+        // Save transaction to Firestore
+        async function saveToFirestore(item) {
+            if (!currentUser) return null;
+
+            syncStatus.textContent = '⏳ Menyimpan...';
+            syncStatus.className = 'sync-status syncing';
+
+            try {
+                const transactionsRef = collection(db, 'users', currentUser.uid, 'transactions');
+                const docRef = await addDoc(transactionsRef, {
+                    ...item,
+                    createdAt: serverTimestamp()
+                });
+
+                syncStatus.textContent = '✓ Tersimpan';
+                syncStatus.className = 'sync-status synced';
+
+                setTimeout(() => {
+                    syncStatus.textContent = '';
+                }, 2000);
+
+                return docRef.id;
+            } catch (error) {
+                console.error('Error saving:', error);
+                syncStatus.textContent = '❌ Gagal menyimpan';
+                alert('Gagal menyimpan: ' + error.message);
+                return null;
+            }
+        }
+
+        // Delete from Firestore
+        async function deleteFromFirestore(docId) {
+            if (!currentUser) return false;
+
+            try {
+                await deleteDoc(doc(db, 'users', currentUser.uid, 'transactions', docId));
+                return true;
+            } catch (error) {
+                console.error('Error deleting:', error);
+                alert('Gagal menghapus: ' + error.message);
+                return false;
+            }
+        }
+
+        // Make functions available globally
+        window.salesData = salesData;
+        window.loadDataFromFirestore = loadDataFromFirestore;
+
+        function formatRupiah(num) {
+            return 'Rp ' + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const parts = dateString.split('-');
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            return `${parts[2]} ${months[parseInt(parts[1]) - 1]} ${parts[0]}`;
+        }
+
+        function renderData() {
+            const listEl = document.getElementById('data-list');
+
+            if (salesData.length === 0) {
+                listEl.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📝</div>
+                        <div>Belum ada data</div>
+                        <div>Tambah transaksi pertama!</div>
+                    </div>
+                `;
+                document.getElementById('count-items').textContent = '0 item';
+            } else {
+                let html = '';
+                salesData.forEach((item, index) => {
+                    const untung = item.jual - item.modal;
+                    const nomor = index + 1;
+                    html += `
+                        <div class="data-item">
+                            <div class="info">
+                                <div class="name">${nomor}. ${item.keterangan}</div>
+                                <div class="details">${formatDate(item.date)} • Modal: ${formatRupiah(item.modal)}</div>
+                            </div>
+                            <div class="numbers">
+                                <div class="jual">${formatRupiah(item.jual)}</div>
+                                <div class="untung">+${formatRupiah(untung)}</div>
+                            </div>
+                            <button class="btn-delete-item" data-id="${item.id}">✕</button>
+                        </div>
+                    `;
+                });
+                listEl.innerHTML = html;
+                document.getElementById('count-items').textContent = `${salesData.length} item`;
+            }
+
+            updateSummary();
+        }
+
+        function updateSummary() {
+            let totalModal = 0, totalJual = 0, totalUntung = 0, totalTarik = 0;
+
+            salesData.forEach(item => {
+                totalUntung += (item.jual - item.modal);
+                totalTarik += item.tarik;
+
+                if (item.tarik === 0) {
+                    totalModal += item.modal;
+                    totalJual += item.jual;
+                }
+            });
+
+            const modalBersih = totalModal - totalTarik;
+            const penjualanBersih = totalJual - totalTarik;
+
+            document.getElementById('sum-modal').textContent = formatRupiah(modalBersih);
+            document.getElementById('sum-jual').textContent = formatRupiah(penjualanBersih);
+            document.getElementById('sum-untung').textContent = formatRupiah(totalUntung);
+            document.getElementById('sum-tarik').textContent = formatRupiah(totalTarik);
+        }
+
+        window.submitForm = async function () {
+            if (!currentUser) {
+                alert('Silakan login terlebih dahulu!');
+                return;
+            }
+
+            const date = document.getElementById('input-date').value;
+            const keterangan = document.getElementById('input-keterangan').value;
+            const modal = parseInt(document.getElementById('input-modal').value) || 0;
+            const jual = parseInt(document.getElementById('input-jual').value) || 0;
+            const tarik = parseInt(document.getElementById('input-tarik').value) || 0;
+
+            if (!date || !keterangan) {
+                alert('Mohon isi tanggal dan keterangan!');
+                return;
+            }
+
+            if (tarik === 0 && (!modal || !jual)) {
+                alert('Mohon isi Modal dan Harga Jual, atau isi Tarik Tunai!');
+                return;
+            }
+
+            const newItem = { date, keterangan, modal, jual, tarik };
+            const docId = await saveToFirestore(newItem);
+
+            if (docId) {
+                salesData.push({ id: docId, ...newItem });
+                renderData();
+
+                // Reset form
+                document.getElementById('input-keterangan').value = '';
+                document.getElementById('input-modal').value = '';
+                document.getElementById('input-jual').value = '';
+                document.getElementById('input-tarik').value = '0';
+            }
+        }
+
+        // Delete handler
+        document.getElementById('data-list').addEventListener('click', async function (e) {
+            const deleteBtn = e.target.closest('.btn-delete-item');
+            if (deleteBtn) {
+                const id = deleteBtn.getAttribute('data-id');
+                const item = salesData.find(d => d.id === id);
+
+                if (item && confirm(`Hapus transaksi "${item.keterangan}"?\n\nModal: ${formatRupiah(item.modal)}\nJual: ${formatRupiah(item.jual)}`)) {
+                    const success = await deleteFromFirestore(id);
+                    if (success) {
+                        salesData = salesData.filter(item => item.id !== id);
+                        renderData();
+                    }
+                }
+            }
+        });
+
+        // Export data as Excel file
+        window.exportData = function () {
+            const wsData = [
+                ['No', 'Tanggal', 'Keterangan', 'Modal', 'Harga Jual', 'Keuntungan', 'Tarik Tunai']
+            ];
+
+            salesData.forEach((item, index) => {
+                const untung = item.jual - item.modal;
+                wsData.push([
+                    index + 1,
+                    item.date,
+                    item.keterangan,
+                    item.modal,
+                    item.jual,
+                    untung,
+                    item.tarik
+                ]);
+            });
+
+            let totalModal = 0, totalJual = 0, totalUntung = 0, totalTarik = 0;
+            salesData.forEach(item => {
+                totalUntung += (item.jual - item.modal);
+                totalTarik += item.tarik;
+                if (item.tarik === 0) {
+                    totalModal += item.modal;
+                    totalJual += item.jual;
+                }
+            });
+
+            wsData.push([]);
+            wsData.push(['', '', 'TOTAL', totalModal - totalTarik, totalJual - totalTarik, totalUntung, totalTarik]);
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+            ws['!cols'] = [
+                { wch: 5 },
+                { wch: 12 },
+                { wch: 25 },
+                { wch: 15 },
+                { wch: 15 },
+                { wch: 15 },
+                { wch: 15 }
+            ];
+
+            XLSX.utils.book_append_sheet(wb, ws, 'Transaksi');
+
+            const dateStr = new Date().toISOString().split('T')[0];
+            XLSX.writeFile(wb, `h20studio_kasir_backup_${dateStr}.xlsx`);
+        }
+
+        // Import data from Excel file
+        window.importData = async function (event) {
+            if (!currentUser) {
+                alert('Silakan login terlebih dahulu!');
+                return;
+            }
+
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function (e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                    if (jsonData.length < 2) {
+                        alert('File Excel kosong atau tidak valid!');
+                        return;
+                    }
+
+                    // Helper function to convert Excel date serial to YYYY-MM-DD
+                    function excelDateToString(excelDate) {
+                        if (!excelDate) return '';
+                        // If already a string, return as-is
+                        if (typeof excelDate === 'string') {
+                            // Try to normalize date format
+                            if (excelDate.includes('/')) {
+                                const parts = excelDate.split('/');
+                                if (parts.length === 3) {
+                                    // Assume DD/MM/YYYY or MM/DD/YYYY format
+                                    return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                                }
+                            }
+                            return excelDate;
+                        }
+                        // If number (Excel date serial), convert it
+                        if (typeof excelDate === 'number') {
+                            const date = new Date((excelDate - 25569) * 86400 * 1000);
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const day = String(date.getDate()).padStart(2, '0');
+                            return `${year}-${month}-${day}`;
+                        }
+                        return '';
+                    }
+
+                    const importedData = [];
+                    for (let i = 1; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        if (!row[0] || row[2] === 'TOTAL' || row.length < 5) continue;
+
+                        importedData.push({
+                            date: excelDateToString(row[1]),
+                            keterangan: String(row[2] || ''),
+                            modal: parseInt(row[3]) || 0,
+                            jual: parseInt(row[4]) || 0,
+                            tarik: parseInt(row[6]) || 0
+                        });
+                    }
+
+                    if (importedData.length === 0) {
+                        alert('Tidak ada data valid ditemukan dalam file!');
+                        return;
+                    }
+
+                    if (confirm(`Import ${importedData.length} transaksi ke Firebase? Data akan digabung dengan data yang sudah ada.`)) {
+                        syncStatus.textContent = '⏳ Mengimport data...';
+                        syncStatus.className = 'sync-status syncing';
+
+                        let successCount = 0;
+                        for (const item of importedData) {
+                            const docId = await saveToFirestore(item);
+                            if (docId) {
+                                salesData.push({ id: docId, ...item });
+                                successCount++;
+                            }
+                        }
+
+                        renderData();
+                        syncStatus.textContent = `✓ ${successCount} transaksi berhasil diimport`;
+                        syncStatus.className = 'sync-status synced';
+                        alert(`${successCount} transaksi berhasil diimport!`);
+                    }
+                } catch (err) {
+                    alert('Error membaca file Excel: ' + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+            event.target.value = '';
+        }
+
+        // Set current date
+        const now = new Date();
+        const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        document.getElementById('current-date').textContent = `${months[now.getMonth()]} ${now.getFullYear()}`;
+        document.getElementById('input-date').valueAsDate = now;
+
+        // Initial render
+        renderData();
+
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Error:', err));
+        }
+    </script>
+</body>
+
+</html>
